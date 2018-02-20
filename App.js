@@ -10,7 +10,8 @@ import {
   StyleSheet,
   Text,
   View,
-  Dimensions
+  Dimensions,
+  Animated
 } from 'react-native';
 import Video from 'react-native-video';
 
@@ -24,7 +25,9 @@ const instructions = Platform.select({
 type Props = {};
 export default class App extends Component<Props> {
   state = {
-    error: false
+    error: false,
+    buffering: true,
+    animated: new Animated.Value(0)
   };
 
   handleError = (meta) => {
@@ -42,21 +45,61 @@ export default class App extends Component<Props> {
     })
   };
 
+  handleLoadStart = () => {
+    this.triggerBufferAnimation();
+  };
+
+  handleBuffer = meta => {
+    meta.isBuffering && this.triggerBufferAnimation();
+
+    if (this.loopingAnimation && !meta.isBuffering) {
+      this.loopingAnimation.stopAnimation();
+    }
+
+    this.setState({
+      buffering: meta.isBuffering
+    })
+  };
+
+  triggerBufferAnimation = () => {
+    this.loopingAnimation = Animated.loop(
+      Animated.timing(this.state.animated, {
+        toValue: 1,
+        duration: 350,
+      })
+    ).start();
+  };
+
   render() {
     const {width} = Dimensions.get("window");
     const height = width * 0.5625;
-    const {error} = this.state;
+    const {error, buffering} = this.state;
+
+    const interpolatedAnimation = this.state.animated.interpolate(({
+      inputRange: [0, 1],
+      outputRange: ["0deg", "360deg"]
+    }));
+
+    const rotateStyle = {
+      transform: [
+        { rotate: interpolatedAnimation }
+      ]
+    };
 
     return (
       <View style={styles.container}>
-        <View style={error ? styles.error : null}>
+        <View style={[error ? styles.error : null, buffering ? styles.buffering : null]}>
           <Video
-            source={{uri: "https://www.w3schools.com/htmld/mov_bbb.mp4"}}
+            source={{uri: "https://www.w3schools.com/html/mov_bbb.mp4"}}
             resizeMode="contain"
             muted={true}
             onError={this.handleError}
+            onLoadStart={this.handleLoadStart}
+            onLoad={this.handleBuffer}
             style={{width, height}}/>
           <View style={styles.videoCover}>
+            {buffering && <Animated.View style={rotateStyle}><Text style={styles.bufferingText}>Loading...</Text></Animated.View>}
+            {/*{buffering && <Animated.View style={rotateStyle}><Icon name="circle-o-notch" size={30} color="#fff"/></Animated.View>}*/}
             {error && <Text>{error}</Text>}
           </View>
         </View>
@@ -97,9 +140,15 @@ const styles = StyleSheet.create({
     top: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255,255,255,.9)'
+    backgroundColor: 'transparent'
   },
   error: {
     backgroundColor: "#000"
+  },
+  buffering: {
+    backgroundColor: "#000"
+  },
+  bufferingText: {
+    color: "#fff"
   }
 });
