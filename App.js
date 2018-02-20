@@ -11,6 +11,7 @@ import {
   Text,
   View
 } from 'react-native';
+import Video from 'react-native-video';
 
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' +
