@@ -27,26 +27,39 @@ export default class App extends Component<Props> {
     error: false
   };
 
+  handleError = (meta) => {
+    const {error: {code}} = meta;
+    let error = "An error occurred playing this video";
+
+    switch (code) {
+      case -11800:
+        error = "Could not load video from URL";
+        break;
+    }
+
+    this.setState({
+      error
+    })
+  };
+
   render() {
     const {width} = Dimensions.get("window");
     const height = width * 0.5625;
+    const {error} = this.state;
 
     return (
       <View style={styles.container}>
-        {/*<Text style={styles.welcome}>*/}
-          {/*Welcome to React Native!*/}
-        {/*</Text>*/}
-        {/*<Text style={styles.instructions}>*/}
-          {/*To get started, edit App.js*/}
-        {/*</Text>*/}
-        {/*<Text style={styles.instructions}>*/}
-          {/*{instructions}*/}
-        {/*</Text>*/}
-        <Video
-          source={{uri: "https://www.w3schools.com/html/mov_bbb.mp4"}}
-          resizeMode="contain"
-          muted={false}
-          style={{width, height}}/>
+        <View style={error ? styles.error : null}>
+          <Video
+            source={{uri: "https://www.w3schools.com/htmld/mov_bbb.mp4"}}
+            resizeMode="contain"
+            muted={true}
+            onError={this.handleError}
+            style={{width, height}}/>
+          <View style={styles.videoCover}>
+            {error && <Text>{error}</Text>}
+          </View>
+        </View>
       </View>
     );
   }
@@ -75,5 +88,18 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  videoCover: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,.9)'
+  },
+  error: {
+    backgroundColor: "#000"
   }
 });
